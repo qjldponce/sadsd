@@ -10,3 +10,37 @@ def getRouter():
 
 if __name__ == '__main__':
     app.run() #run our Flask app 
+from flask import Flask, jsonify, request
+
+app = Flask (name)
+
+movies = [
+    {
+    "name": "The Shawshank Redemption",
+    "cast": ["Tim Robbins", "Morgan Freeman", "Bob Gunton", "William Sadler"],
+    "genres": ["Drama"]
+},
+{
+    "name": "The Godfather ",
+    "cast": ["Marlon Brando", "Al Pacino", "James Caan", "Diane Keaton"],
+    "genres": ["Crime", "Drama"]
+}
+]
+
+@app.route('/movies', methods=['GET'])
+def getMovies():
+    return jsonify(movies)
+
+@app.route('/movies', methods=['POST'])
+def add_movie():
+    movie = request.get_json()
+    movies.append(movie)
+    return {'id': len(movies)}, 200
+
+@app.route('/movies', methods=['DELETE'])
+def delete_movie(index):
+    movies.pop(index)
+    return 'None',200
+
+if name == 'main':
+    app.run() #run our Flask app
