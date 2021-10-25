@@ -52,6 +52,30 @@ def read_student(student_id):
     student = Student.query.get(student_id)
     result = student_schema.dump(student)
     return student_schema.jsonify(result)
+@app.route('/students/<student_id>', methods=['PUT'])
+def update_student(student_id):
+    student = Student.query.get(student_id)
+    student_firstname = request.json.get('student_firstname')
+    student_lname = request.json.get('student_lname')
+    student_midname = request.json.get('student_midname')
+
+    student.student_firstname = student_firstname
+    student.student_lname = student_lname
+    student.student_midname = student_midname
+
+    db.session.commit()
+
+    return student_schema.jsonify(student)
+    
+@app.route('/students/<student_id>', methods=['DELETE'])
+def delete_student(student_id):
+    student = Student.query.get(student_id)
+    db.session.delete(student)
+    db.session.commit()
+    return student_schema.jsonify(student)
+
+
+
     
 if __name__ == '__main__':
     app.run(debug=True) 
