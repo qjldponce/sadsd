@@ -1,7 +1,7 @@
 import urllib
 import requests
 
-external_ip = urllib.request.urlopen('https://ident.me/%27).read().decode(%27utf8%27)
+external_ip = urllib.request.urlopen('https://ident.me/').read().decode('utf8')
 
 url = "https://ipapi.co/" + external_ip + "/json"
 
