@@ -36,3 +36,80 @@ if __name__ == "__main__":
     
     
 docker run --rm -u root -p 8080:8080 -v jenkins-data:/var/jenkins_home -v $(which docker):/usr/bin/docker -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME":/home --name jenkins_server jenkins/jenkins:lts
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///Userdb.sqlite'
+
+db = SQLAlchemy(app)
+ma = Marshmallow(app)
+
+class User(db.Model):
+    tablename = "heart_data"
+    heart_id = db.Column(db.String(50), primary_key=True)
+    date = db.Column(db.String(50))
+    heart_rate = db.Column(db.String(50))
+
+    def __init__(self, heart_id, date, heart_rate):
+        self.heart_id = heart_id
+        self.date = date
+        self.heart_rate = heart_rate
+
+class HeartSchema(ma.Schema):
+    class Meta:
+        fields = ("heart_id", "date", "heart_rate")
+
+heart_schema = HeartSchema()
+hearts_schema = HeartSchema(many=True)
+
+@app.route('/heart_data', methods=['POST'])
+def heart_data():
+    heart_id = request.json.get('heart_id')
+    date = request.json.get('date')
+    heart_rate = request.json.get('heart_rate')
+    new_data = User(heart_id, date, heart_rate)
+    db.session.add(new_data)
+    db.session.commit()
+
+    return heart_schema.jsonify(new_data)
+
+@app.route('/heart_data', methods=['GET'])
+def read_all():
+    users = User.query.all()
+    result = hearts_schema.dump(users)
+    return hearts_schema.jsonify(result).data
+
+@app.route('/heart_data/<heart_id>', methods=['GET'])
+def read_specific(heart_id):
+    user = User.query.get(heart_id)
+    result = heart_schema.dump(user)
+    return heart_schema.jsonify(result).data
+
+@app.route('/heart_data/<heart_id>', methods=['PUT'])
+def update_specific(heart_id):
+    user = User.query.get(heart_id)
+    heart_id = request.json.get('heart_id')
+    date = request.json.get('date')
+    heart_rate = request.json.get('heart_rate')
+
+    user.heart_id = heart_id
+    user.date = date
+    user.heart_rate = heart_rate
+
+    db.session.commit()
+
+    return heart_schema.jsonify(user)
+
+@app.route('/heart_data/<heart_id>', methods=['DELETE'])
+def delete_specific(heart_id):
+    user = User.query.get(heart_id)
+    db.session.delete(user)
+    db.session.commit()
+    return heart_schema.jsonify(user)
+
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5050)
