@@ -49,3 +49,14 @@ yaml/testbed.yml
 genie parse "show ip interface brief" --testbed-file yaml/testbed.yml --devices CSR1kv
 
 genie parse "show version" --testbed-file yaml/testbed.yml --devices CSR1kv
+
+
+
+a.	On the CSR1kv VM add the following IPv6 address: 
+CSR1kv(config)# interface gig 1
+CSR1kv(config-if)# ipv6 address 2001:db8:acad:56::101/64
+Step 2: Use Genie to verify configuration and parse output in JSON.
+a.	Parse unstructured output from the show ipv6 interface command into structured JSON. Use the --output parameter to send the output to a directory verify-ipv6-1. Notice in the output that Genie tells you that two files were created.
+(csr1kv) devasc@labvm:~/labs/devnet-src/pyats/csr1kv$ genie parse "show ipv6 interface gig 1" --testbed-file yaml/testbed.yml --devices CSR1kv --output verify-ipv6-1
+Enter enable password for device CSR1kv: <Enter>
+2020-05-31T19:36:19: %UNICON-WARNING: Device 'CSR1kv' 
