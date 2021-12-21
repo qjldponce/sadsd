@@ -44,3 +44,8 @@ Testbed file generated:
 yaml/testbed.yml 
 
 (csr1kv) devasc@labvm:~/labs/devnet-src/pyats/csr1kv$
+
+
+genie parse "show ip interface brief" --testbed-file yaml/testbed.yml --devices CSR1kv
+
+genie parse "show version" --testbed-file yaml/testbed.yml --devices CSR1kv
