@@ -24,3 +24,23 @@ register: output
 copy:
 content: "{{ output.stdout[0] }}"
 dest: "backups/showipv6_run_{{ inventory_hostname }}.txt"
+
+
+(csr1kv) devasc@labvm:~/labs/devnet-src/pyats/csr1kv$ genie create testbed interactive --output yaml/testbed.yml --encode-password
+Start creating Testbed yaml file ...
+Do all of the devices have the same username? [y/n] n
+Do all of the devices have the same default password? [y/n] n
+Do all of the devices have the same enable password? [y/n] n
+
+Device hostname: CSR1kv
+   IP (ip, or ip:port): 192.168.56.101
+   Username: cisco
+Default Password (leave blank if you want to enter on demand): cisco123!
+Enable Password (leave blank if you want to enter on demand): 
+   Protocol (ssh, telnet, ...): ssh -o KexAlgorithms=diffie-hellman-group14-sha1
+   OS (iosxr, iosxe, ios, nxos, linux, ...): iosxe
+More devices to add ? [y/n] n
+Testbed file generated: 
+yaml/testbed.yml 
+
+(csr1kv) devasc@labvm:~/labs/devnet-src/pyats/csr1kv$
