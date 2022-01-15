@@ -1,62 +1,183 @@
+[routers]
+R1 ansible_host=10.10.10.1
+R2 ansible_host=10.10.10.2
+
+[routers:vars]
+ansible_user=cisco
+ansible_password=cisco123
+ansible_connection=network_cli
+ansible_network_os=ios
+ansible_port=22
+ansible_become=yes
+ansible_become_method=enable
+ansible_become_pass=cisco123
+
+[ubuntu]
+192.168.20.2 ansible_ssh_pass=cisco123 ansible_ssh_user=gabriel ansible_password=cisco123 ansible_port=22 ansible_become=yes ansible_sudo_pass=cisco123
+sudo nano ~/.ssh/config
+Host *
+    Port 22
+    User cisco
+    StrictHostKeyChecking=no
+    UserKnownHostsFile=/dev/null
+    KexAlgorithms +diffie-hellman-group1-sha1
+    Ciphers +3des-cbc
+
+    SendEnv LANG LC_*
+    Ciphers +aes256-cbc
+    
+[defaults]
+inventory = ./hosts
+host_key_checking = false
+timeout = 15 
+deprecation_warnings=False
+remote_user = Gabriel
+<title>jdlamzon-tip website</title>
+<body>
+    <h1>Hello World!</h1>
+
+    <p>This is the landing page of <strong>jdlamzon-tip</strong>
 ---
-- name: Configure CSR1000v
-hosts: CSR1kv
-gather_facts: false
-connection: local
+- name: Installing Apache2 Server and Updating the Firewall
+  hosts: ubuntu
 
-tasks:
-- name: Configure IPv6 Address
-ios_config:
-parents:
-- interface GigabitEthernet1
-lines:
-- description IPv6 addresses (GUA and Link Local)
-- ipv6 address 2001:db8:acad:1::1/64
-- ipv6 address fe80::1 link-local
+  tasks:
+  - name: Installing Apache
+    apt:
+      name: apache2
+      state: present
 
-- name: Display the interface ipv6 addresses of the hosts
-ios_command:
-commands:
-- show ipv6 int brief
-register: output
+  - name: Starting apache2 service
+    service:
+      name: apache2
+      state: started
+      enabled: yes
 
-- name: Save the output of ipv6 addresses to a file
-copy:
-content: "{{ output.stdout[0] }}"
-dest: "backups/showipv6_run_{{ inventory_hostname }}.txt"
+  - name: Allowing access to TCP Port 80
+    ufw:
+      rule: allow
+      port: '80'
+      proto: tcp
+
+  - name: Enabling firewall
+    ufw:
+      state: enabled
+
+- name: Creating the website
+  hosts: ubuntu
+
+  tasks:
+  - name: Creating HTML test file
+    copy:
+      src: ./index.html
+      dest: /var/www/html/index.html
+      owner: root
+      group: root
+      mode: '0644'
+    register: index
+
+  - name: Starting the web service
+    service:
+      name: apache2
+      state: restarted
+      enabled: yes
+    when: index.changed
+
+  - name: Allowing access to TCP Port 80
+    ufw:
+      rule: allow
+      port: '80'
+      proto: tcp
+
+  - name: Reloading ufw
+    ufw:
+      state: reloaded
+      
+      
+      
+      
+[routers]
+R1 ansible_host=10.10.10.1
+R2 ansible_host=10.10.10.2
+
+[routers:vars]
+ansible_user=cisco
+ansible_password=cisco123
+ansible_connection=network_cli
+ansible_network_os=ios
+ansible_port=22
+ansible_become=yes
+ansible_become_method=enable
+ansible_become_pass=cisco123
+
+[ubuntu]
+192.168.20.2 ansible_ssh_pass=cisco123 ansible_ssh_user=gabriel ansible_password=cisco123 ansible_port=22 ansible_become=yes ansible_sudo_pass=cisco123  
 
 
-(csr1kv) devasc@labvm:~/labs/devnet-src/pyats/csr1kv$ genie create testbed interactive --output yaml/testbed.yml --encode-password
-Start creating Testbed yaml file ...
-Do all of the devices have the same username? [y/n] n
-Do all of the devices have the same default password? [y/n] n
-Do all of the devices have the same enable password? [y/n] n
 
-Device hostname: CSR1kv
-   IP (ip, or ip:port): 192.168.56.101
-   Username: cisco
-Default Password (leave blank if you want to enter on demand): cisco123!
-Enable Password (leave blank if you want to enter on demand): 
-   Protocol (ssh, telnet, ...): ssh -o KexAlgorithms=diffie-hellman-group14-sha1
-   OS (iosxr, iosxe, ios, nxos, linux, ...): iosxe
-More devices to add ? [y/n] n
-Testbed file generated: 
-yaml/testbed.yml 
+---
+- name: Configure OSPF on R1
+  hosts: R1
+  gather_facts: false
+  connection: local
 
-(csr1kv) devasc@labvm:~/labs/devnet-src/pyats/csr1kv$
+  vars:
+    cli:
+      username: cisco
+      password: cisco123
 
+  tasks:
+    - name: Enable OSPF on R1
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        parents: router ospf 1
+        lines:
+          - network 0.0.0.0 255.255.255.255 area 0
+        
+      register: print_output
+    - debug: var=print_output
 
-genie parse "show ip interface brief" --testbed-file yaml/testbed.yml --devices CSR1kv
+- name: Configure OSPF on R2
+  hosts: R2
+  gather_facts: false
+  connection: local
 
-genie parse "show version" --testbed-file yaml/testbed.yml --devices CSR1kv
+  vars:
+    cli:
+      username: cisco
+      password: cisco123
 
+  tasks:
+    - name: Enable OSPF on R2
+      ios_config:
+        provider: "{{ cli }}"
+        authorize: yes
+        parents: router ospf 1
+        lines:
+          - network 0.0.0.0 255.255.255.255 area 0
+        
+      register: print_output
+    - debug: var=print_output
+    
+    
+---
+- name: Configure ACL on R2
+  hosts: R2
+  gather_facts: false
+  connection: local
 
+  tasks:
+    - name: Configure ACL inbound
+      ios_config:
+        lines:
+          - ip access-group 110 in
+        parents: interface FastEthernet0/0
 
-a.	On the CSR1kv VM add the following IPv6 address: 
-CSR1kv(config)# interface gig 1
-CSR1kv(config-if)# ipv6 address 2001:db8:acad:56::101/64
-Step 2: Use Genie to verify configuration and parse output in JSON.
-a.	Parse unstructured output from the show ipv6 interface command into structured JSON. Use the --output parameter to send the output to a directory verify-ipv6-1. Notice in the output that Genie tells you that two files were created.
-(csr1kv) devasc@labvm:~/labs/devnet-src/pyats/csr1kv$ genie parse "show ipv6 interface gig 1" --testbed-file yaml/testbed.yml --devices CSR1kv --output verify-ipv6-1
-Enter enable password for device CSR1kv: <Enter>
-2020-05-31T19:36:19: %UNICON-WARNING: Device 'CSR1kv' 
+    - name: Create inbound ACL rules for R2
+      ios_config:
+        lines:
+          - access-list 110 deny icmp any any echo-reply
+          - access-list 110 permit ip any any
+        before: no access-list 110
+        match: exact
